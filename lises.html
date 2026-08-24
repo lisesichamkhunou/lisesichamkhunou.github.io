@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The L. I. Standard English School - Salary Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#082f49',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- SheetJS (Excel) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF & AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-sans transition-colors duration-200">
+
+    <!-- LOGIN CONTAINER -->
+    <div id="loginView" class="flex min-h-screen items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-8">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 mb-4 shadow-inner">
+                    <i data-lucide="graduation-cap" class="w-8 h-8"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">The L. I. Standard English School</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Icham Khunou | Payroll System</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i data-lucide="user" class="w-4 h-4"></i></span>
+                        <input type="text" id="loginUsername" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i data-lucide="lock" class="w-4 h-4"></i></span>
+                        <input type="password" id="loginPassword" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+                    </div>
+                </div>
+                <div id="loginError" class="text-xs text-rose-500 text-center font-medium hidden">Invalid credentials. Please verify your login details.</div>
+                <button type="submit" class="w-full py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition duration-150 flex items-center justify-center gap-2">
+                    <i data-lucide="log-in" class="w-4 h-4"></i> Sign In to Portal
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="appView" class="hidden min-h-screen flex flex-col">
+        <!-- TOP NAVIGATION -->
+        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-lg shadow">
+                            LI
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white leading-tight">The L. I. Standard English School</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Icham Khunou — Staff & Driver Payroll</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 sm:gap-4">
+                        <button onclick="toggleTheme()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none" title="Toggle Theme">
+                            <i data-lucide="sun" class="w-5 h-5 hidden dark:block text-amber-400"></i>
+                            <i data-lucide="moon" class="w-5 h-5 block dark:hidden text-slate-600"></i>
+                        </button>
+
+                        <button onclick="openAdminModal()" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-left">
+                            <img id="navProfilePhoto" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Admin" class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-500">
+                            <div class="hidden sm:block text-xs">
+                                <p id="navAdminName" class="font-semibold leading-tight">LISES Admin</p>
+                                <p class="text-slate-400 text-[10px]">Settings</p>
+                            </div>
+                        </button>
+
+                        <button onclick="handleLogout()" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg" title="Logout">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PERIOD & TABS -->
+                <div class="py-2.5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="switchTab('teachers-record')" id="tab-teachers-record" class="tab-btn px-3 py-1.5 rounded-md font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                            Teachers Attendance Record
+                        </button>
+                        <button onclick="switchTab('teachers-salary')" id="tab-teachers-salary" class="tab-btn px-3 py-1.5 rounded-md font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 transition">
+                            Teachers Salary Module
+                        </button>
+                        <button onclick="switchTab('drivers-salary')" id="tab-drivers-salary" class="tab-btn px-3 py-1.5 rounded-md font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                            Van Drivers Salary Module
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span class="text-slate-500 pl-2"><i data-lucide="calendar" class="w-3.5 h-3.5"></i></span>
+                        <select id="selectedMonth" onchange="changePeriod()" class="bg-transparent font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer py-1">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                        <select id="selectedYear" onchange="changePeriod()" class="bg-transparent font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer py-1 pr-2">
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN VIEWPORT -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+            <!-- STATS SUMMARY CARDS -->
+            <div id="kpiContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"></div>
+
+            <!-- MODULE 1: TEACHERS RECORD -->
+            <div id="moduleTeachersRecord" class="module-view hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">Teachers Monthly Attendance Record</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Independent attendance ledger (Profiles & names editable inline or via modal).</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="openStaffModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Staff Profile
+                            </button>
+                            <button onclick="downloadTeacherRecordPDF()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Download A4 PDF
+                            </button>
+                            <button onclick="downloadTeacherRecordExcel()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="sheet" class="w-4 h-4"></i> Download Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-lg border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-left text-xs divide-y divide-slate-200 dark:divide-slate-700">
+                            <thead class="bg-slate-50 dark:bg-slate-900/60 font-semibold text-slate-600 dark:text-slate-300">
+                                <tr>
+                                    <th class="py-2.5 px-3 w-12 text-center">Sl</th>
+                                    <th class="py-2.5 px-3 min-w-[200px]">Name of Teacher (Profile)</th>
+                                    <th class="py-2.5 px-3 min-w-[150px]">Designation (Profile)</th>
+                                    <th class="py-2.5 px-2 text-center">Total Absent</th>
+                                    <th class="py-2.5 px-2 text-center">Total Leave</th>
+                                    <th class="py-2.5 px-2 text-center">Late Arrival</th>
+                                    <th class="py-2.5 px-2 text-center">Early Departure</th>
+                                    <th class="py-2.5 px-3 text-center w-24">Profile Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teachersRecordTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 2: TEACHERS SALARY -->
+            <div id="moduleTeachersSalary" class="module-view space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4 text-xs">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <span class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"><i data-lucide="sliders" class="w-4 h-4"></i> Monthly Policy Settings:</span>
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-slate-500">Days in Month:</label>
+                                <input type="number" id="policyDaysInMonth" value="30" onchange="updatePolicyConfig()" class="w-14 px-2 py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-center">
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-slate-500">Annual Leave Limit:</label>
+                                <input type="number" id="policyAnnualLeave" value="12" onchange="updatePolicyConfig()" class="w-14 px-2 py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-center">
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-slate-500">Late Penalty (₹):</label>
+                                <input type="number" id="policyLatePenalty" value="100" onchange="updatePolicyConfig()" class="w-16 px-2 py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-center">
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-slate-500">Early Penalty (₹):</label>
+                                <input type="number" id="policyEarlyPenalty" value="100" onchange="updatePolicyConfig()" class="w-16 px-2 py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-center">
+                            </div>
+                        </div>
+                        <button onclick="saveAllCurrentMonthData()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-sm flex items-center gap-1.5 ml-auto">
+                            <i data-lucide="save" class="w-4 h-4"></i> Save All Changes
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">Teachers & Staff Salary Master Sheet</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">All profile properties (Name, Designation, Salary, Increment, Marup) and monthly data are fully editable.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="openStaffModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i> Add Teacher Profile
+                            </button>
+                            <button onclick="downloadTeacherSalaryPDF()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Master Salary PDF
+                            </button>
+                            <button onclick="downloadTeacherSalaryExcel()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="sheet" class="w-4 h-4"></i> Excel Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-lg border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-left text-[11px] leading-tight divide-y divide-slate-200 dark:divide-slate-700">
+                            <thead class="bg-slate-50 dark:bg-slate-900/70 font-bold text-slate-700 dark:text-slate-300">
+                                <tr>
+                                    <th class="py-2.5 px-2 text-center w-8">Sl</th>
+                                    <th class="py-2.5 px-2 min-w-[160px]">Teacher Name (Profile)</th>
+                                    <th class="py-2.5 px-2 min-w-[120px]">Designation (Profile)</th>
+                                    <th class="py-2.5 px-1 text-center w-10">Abs</th>
+                                    <th class="py-2.5 px-1 text-center w-10">Lev</th>
+                                    <th class="py-2.5 px-1 text-center w-10">Late</th>
+                                    <th class="py-2.5 px-1 text-center w-10">Dep</th>
+                                    <th class="py-2.5 px-1.5 text-center min-w-[85px] bg-blue-50/50 dark:bg-blue-950/20 text-brand-700 dark:text-brand-300">Salary (₹)</th>
+                                    <th class="py-2.5 px-1.5 text-center min-w-[75px] bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300">Increment</th>
+                                    <th class="py-2.5 px-2 text-right">Total Salary</th>
+                                    <th class="py-2.5 px-1.5 text-center min-w-[75px] bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300">Marup (₹)</th>
+                                    <th class="py-2.5 px-2 text-right">Deduction</th>
+                                    <th class="py-2.5 px-2 text-right">Advance</th>
+                                    <th class="py-2.5 px-2 text-right font-black text-brand-700 dark:text-brand-400">Probable Amt</th>
+                                    <th class="py-2.5 px-2 text-center w-24">Profile / Slip</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teachersSalaryTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-800"></tbody>
+                            <tfoot id="teachersSalaryTableFoot" class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-600"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 3: VAN DRIVERS SALARY -->
+            <div id="moduleDriversSalary" class="module-view hidden space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white">Van Drivers Salary & Profile Ledger</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Driver profiles (Name, Address, Phone, Base Salary) are directly editable inline and in modal.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="openDriverModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i> Add Driver Profile
+                            </button>
+                            <button onclick="downloadDriverSalaryPDF()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Drivers A4 PDF
+                            </button>
+                            <button onclick="downloadDriverSalaryExcel()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="sheet" class="w-4 h-4"></i> Export Excel
+                            </button>
+                            <button onclick="saveAllCurrentMonthData()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg text-xs shadow-sm flex items-center gap-1.5">
+                                <i data-lucide="save" class="w-4 h-4"></i> Save All Changes
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-lg border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-left text-xs divide-y divide-slate-200 dark:divide-slate-700">
+                            <thead class="bg-slate-50 dark:bg-slate-900/60 font-semibold text-slate-600 dark:text-slate-300">
+                                <tr>
+                                    <th class="py-2.5 px-3 w-10 text-center">Sl</th>
+                                    <th class="py-2.5 px-2 min-w-[170px]">Driver Name (Profile)</th>
+                                    <th class="py-2.5 px-2 min-w-[150px]">Address / Route (Profile)</th>
+                                    <th class="py-2.5 px-2 min-w-[125px]">Contact No (Profile)</th>
+                                    <th class="py-2.5 px-2 text-center min-w-[95px] bg-blue-50/50 dark:bg-blue-950/20 text-brand-700 dark:text-brand-300">Salary (₹)</th>
+                                    <th class="py-2.5 px-3 text-right">Deduction (₹)</th>
+                                    <th class="py-2.5 px-3 text-right">Advance (₹)</th>
+                                    <th class="py-2.5 px-3 text-right font-bold text-brand-700 dark:text-brand-400">Probable Amount (₹)</th>
+                                    <th class="py-2.5 px-3 text-center w-28">Profile / Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="driversSalaryTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-800"></tbody>
+                            <tfoot id="driversSalaryTableFoot" class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-600"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: ADMIN PROFILE & CONFIG -->
+    <div id="adminModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-base text-slate-900 dark:text-white">Admin Profile & System Settings</h3>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Admin Display Name</label>
+                    <input type="text" id="adminNameInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Admin E-mail</label>
+                    <input type="email" id="adminEmailInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Contact Number</label>
+                    <input type="text" id="adminPhoneInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Profile Photo URL</label>
+                    <input type="url" id="adminPhotoInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border rounded-lg">
+                </div>
+            </div>
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeAdminModal()" class="px-4 py-2 border rounded-lg font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+                <button onclick="saveAdminProfile()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT TEACHER PROFILE -->
+    <div id="staffModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                <h3 id="staffModalTitle" class="font-bold text-base text-slate-900 dark:text-white">Edit Teacher Profile</h3>
+                <button onclick="closeStaffModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <input type="hidden" id="staffEditId">
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Teacher Full Name</label>
+                    <input type="text" id="staffNameInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Designation</label>
+                    <input type="text" id="staffDesigInput" placeholder="e.g. Assistant Teacher" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Base Salary (₹)</label>
+                        <input type="number" id="staffSalaryInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Salary Increment (₹)</label>
+                        <input type="number" id="staffIncrementInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" value="0">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Deduction (Marup) (₹)</label>
+                    <input type="number" id="staffMarupInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" value="0">
+                </div>
+            </div>
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeStaffModal()" class="px-4 py-2 border rounded-lg font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+                <button onclick="saveStaffProfile()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm">Save Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT VAN DRIVER PROFILE -->
+    <div id="driverModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                <h3 id="driverModalTitle" class="font-bold text-base text-slate-900 dark:text-white">Edit Van Driver Profile</h3>
+                <button onclick="closeDriverModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <input type="hidden" id="driverEditId">
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Driver Full Name</label>
+                    <input type="text" id="driverNameInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Address / Route</label>
+                    <input type="text" id="driverAddressInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Contact Number</label>
+                    <input type="text" id="driverPhoneInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Base Monthly Salary (₹)</label>
+                    <input type="number" id="driverSalaryInput" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg" required>
+                </div>
+            </div>
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeDriverModal()" class="px-4 py-2 border rounded-lg font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+                <button onclick="saveDriverProfile()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm">Save Driver Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORE JAVASCRIPT ENGINE -->
+    <script>
+        const initialTeachers = [
+            { id: 1, name: "Laishram Gandhi Singh", designation: "Principal", salary: 16920, increment: 1000, marup: 200 },
+            { id: 2, name: "Longjam Bijoy Singh", designation: "V.P", salary: 16560, increment: 1000, marup: 200 },
+            { id: 3, name: "Hidam Rajenkumar Singh", designation: "Assistant Teacher", salary: 13158, increment: 990, marup: 200 },
+            { id: 4, name: "Thokchom Ibomcha Singh", designation: "Assistant Teacher", salary: 14130, increment: 1000, marup: 200 },
+            { id: 5, name: "Sagolsem Ratan Singh", designation: "Assistant Teacher", salary: 12875, increment: 1000, marup: 200 },
+            { id: 6, name: "Konsam Romio Singh", designation: "Assistant Teacher", salary: 14040, increment: 1000, marup: 200 },
+            { id: 7, name: "Rameshore Thoudam", designation: "Assistant Teacher", salary: 13898, increment: 980, marup: 200 },
+            { id: 8, name: "Ksh. Manishang Devi", designation: "Assistant Teacher", salary: 13377, increment: 995, marup: 200 },
+            { id: 9, name: "Kunjakeshore Thoudam", designation: "Assistant Teacher", salary: 13330, increment: 970, marup: 200 },
+            { id: 10, name: "Tonjam Subhachandra Singh", designation: "Assistant Teacher", salary: 8949, increment: 0, marup: 200 },
+            { id: 11, name: "Wahengbam Angouba Singh", designation: "Assistant Teacher", salary: 10510, increment: 965, marup: 0 },
+            { id: 12, name: "Kangabam Manao Singh", designation: "Assistant Teacher", salary: 14300, increment: 995, marup: 200 },
+            { id: 13, name: "Akoijam Sanahal Singh", designation: "Assistant Teacher", salary: 12032, increment: 1000, marup: 200 },
+            { id: 14, name: "Moirangthem Kanankumari Devi", designation: "Assistant Teacher", salary: 10065, increment: 1000, marup: 0 },
+            { id: 15, name: "Thoudam Shyam Singh", designation: "Head Clerk", salary: 15000, increment: 1000, marup: 200 },
+            { id: 16, name: "Ningthoujam Chaoba Singh", designation: "Choukidar", salary: 9500, increment: 500, marup: 200 },
+            { id: 17, name: "Wairokpam Tanuja Devi", designation: "Assistant Teacher", salary: 9800, increment: 985, marup: 200 },
+            { id: 18, name: "Thokchom Romila Devi", designation: "Assistant Teacher", salary: 8640, increment: 1000, marup: 0 },
+            { id: 19, name: "Hidam Gobind Singh", designation: "Assistant Teacher", salary: 9845, increment: 990, marup: 200 },
+            { id: 20, name: "Pukhrihongbam Soji Leima", designation: "Assistant Teacher", salary: 8645, increment: 990, marup: 200 },
+            { id: 21, name: "Puja Devi Khumukjam", designation: "Assistant Teacher", salary: 8600, increment: 995, marup: 200 },
+            { id: 22, name: "Koijam Sundari Devi", designation: "Assistant Teacher", salary: 7700, increment: 980, marup: 0 },
+            { id: 23, name: "Thokchom Maleshwori Devi", designation: "Assistant Teacher", salary: 6750, increment: 975, marup: 200 },
+            { id: 24, name: "Akoijam Bijoychand Singh", designation: "Assistant Teacher", salary: 5000, increment: 0, marup: 200 },
+            { id: 25, name: "Ningthoujam Somokanta Singh", designation: "Assistant Teacher", salary: 6000, increment: 0, marup: 200 },
+            { id: 26, name: "Daishina Ahongshangbam", designation: "Assistant Teacher", salary: 6300, increment: 985, marup: 200 },
+            { id: 27, name: "Nandeibam Thoiba Singh", designation: "Computer Operator", salary: 6000, increment: 2500, marup: 200 },
+            { id: 28, name: "Thoudam Sanjitkumar Singh", designation: "Assistant Teacher", salary: 7000, increment: 0, marup: 0 },
+            { id: 29, name: "Laishram Nganthoi Chanu", designation: "Assistant Teacher", salary: 6300, increment: 995, marup: 0 },
+            { id: 30, name: "Heisnam Joshil Singh", designation: "Assistant Teacher", salary: 7000, increment: 995, marup: 200 },
+            { id: 31, name: "Alexson Nongsaibam", designation: "Computer", salary: 7000, increment: 955, marup: 0 },
+            { id: 32, name: "Takhellambam Romen Singh", designation: "Assistant Teacher", salary: 8500, increment: 970, marup: 0 },
+            { id: 33, name: "Maibam Dimpu Singh", designation: "Assistant Teacher", salary: 6000, increment: 995, marup: 200 },
+            { id: 34, name: "Roshibina Laishram", designation: "Assistant Teacher", salary: 4000, increment: 0, marup: 0 },
+            { id: 35, name: "Khwairakpam Abe Devi", designation: "Staff Nurse", salary: 7000, increment: 0, marup: 0 },
+            { id: 36, name: "Ningombam Nehru Singh", designation: "Assistant Teacher", salary: 4000, increment: 0, marup: 0 }
+        ];
+
+        const initialDrivers = [
+            { id: 1, name: "Maibam Basanta Singh", address: "Langmeithet", phone: "9862983517", salary: 4450 },
+            { id: 2, name: "Seram Arunjit Singh", address: "Lourembam , Bengi", phone: "9366169911", salary: 2600 },
+            { id: 3, name: "Khoirom Damodor Singh", address: "Pechi", phone: "8787300958", salary: 1750 },
+            { id: 4, name: "Oinam Hema Singh", address: "Charangpat", phone: "8794539767", salary: 4200 },
+            { id: 5, name: "Haobam Modon Singh", address: "Uyal, Thokchom", phone: "8119876012", salary: 2000 },
+            { id: 6, name: "Khamnam Jayenta Singh", address: "Charangpat", phone: "9233681611", salary: 3400 },
+            { id: 7, name: "Tourangbam Dinesh Singh", address: "Charangpat", phone: "6009209005", salary: 1000 },
+            { id: 8, name: "Huidrom Ingo Singh", address: "Uyal, Thokchom", phone: "9615910096", salary: 4300 },
+            { id: 9, name: "Seram Bikramjit Singh", address: "Uyal, Thokchom , Bengi", phone: "7005098789", salary: 3800 },
+            { id: 10, name: "Yumnam Brojen Singh", address: "Nongpok Sekmai", phone: "8974093059", salary: 2500 }
+        ];
+
+        let teachers = JSON.parse(localStorage.getItem('LISES_TEACHERS')) || initialTeachers;
+        let drivers = JSON.parse(localStorage.getItem('LISES_DRIVERS')) || initialDrivers;
+        let monthlyData = JSON.parse(localStorage.getItem('LISES_MONTHLY_DATA')) || {};
+        let attendanceData = JSON.parse(localStorage.getItem('LISES_ATTENDANCE_DATA')) || {};
+        let adminProfile = JSON.parse(localStorage.getItem('LISES_ADMIN_PROFILE')) || {
+            name: "LISES Admin",
+            email: "lisesichamkhunou@gmail.com",
+            phone: "+91 9876543210",
+            photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+        };
+        let policyConfig = JSON.parse(localStorage.getItem('LISES_POLICY')) || {
+            daysInMonth: 30,
+            annualLeaveLimit: 12,
+            latePenalty: 100,
+            earlyPenalty: 100
+        };
+
+        let currentTab = 'teachers-salary';
+
+        function initYearSelector() {
+            const yearSelect = document.getElementById('selectedYear');
+            yearSelect.innerHTML = '';
+            for (let y = 2026; y <= 2100; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
+            yearSelect.value = "2026";
+            document.getElementById('selectedMonth').value = "1";
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initYearSelector();
+            loadAdminProfile();
+            loadPolicyConfigInputs();
+            checkAuth();
+            lucide.createIcons();
+        });
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('LISES_THEME', isDark ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('LISES_THEME') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+
+            if (u === 'lises' && p === 'Lises@2026') {
+                sessionStorage.setItem('LISES_AUTH', 'true');
+                document.getElementById('loginError').classList.add('hidden');
+                document.getElementById('loginView').classList.add('hidden');
+                document.getElementById('appView').classList.remove('hidden');
+                renderCurrentModule();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function checkAuth() {
+            if (sessionStorage.getItem('LISES_AUTH') === 'true') {
+                document.getElementById('loginView').classList.add('hidden');
+                document.getElementById('appView').classList.remove('hidden');
+                renderCurrentModule();
+            } else {
+                document.getElementById('loginView').classList.remove('hidden');
+                document.getElementById('appView').classList.add('hidden');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('LISES_AUTH');
+            location.reload();
+        }
+
+        function loadAdminProfile() {
+            document.getElementById('navAdminName').textContent = adminProfile.name;
+            document.getElementById('navProfilePhoto').src = adminProfile.photo;
+            document.getElementById('adminNameInput').value = adminProfile.name;
+            document.getElementById('adminEmailInput').value = adminProfile.email;
+            document.getElementById('adminPhoneInput').value = adminProfile.phone;
+            document.getElementById('adminPhotoInput').value = adminProfile.photo;
+        }
+
+        function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); }
+        function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
+        function saveAdminProfile() {
+            adminProfile.name = document.getElementById('adminNameInput').value.trim() || 'LISES Admin';
+            adminProfile.email = document.getElementById('adminEmailInput').value.trim();
+            adminProfile.phone = document.getElementById('adminPhoneInput').value.trim();
+            adminProfile.photo = document.getElementById('adminPhotoInput').value.trim() || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80';
+            localStorage.setItem('LISES_ADMIN_PROFILE', JSON.stringify(adminProfile));
+            loadAdminProfile();
+            closeAdminModal();
+        }
+
+        function loadPolicyConfigInputs() {
+            document.getElementById('policyDaysInMonth').value = policyConfig.daysInMonth;
+            document.getElementById('policyAnnualLeave').value = policyConfig.annualLeaveLimit;
+            document.getElementById('policyLatePenalty').value = policyConfig.latePenalty;
+            document.getElementById('policyEarlyPenalty').value = policyConfig.earlyPenalty;
+        }
+        function updatePolicyConfig() {
+            policyConfig.daysInMonth = parseFloat(document.getElementById('policyDaysInMonth').value) || 30;
+            policyConfig.annualLeaveLimit = parseFloat(document.getElementById('policyAnnualLeave').value) || 12;
+            policyConfig.latePenalty = parseFloat(document.getElementById('policyLatePenalty').value) || 100;
+            policyConfig.earlyPenalty = parseFloat(document.getElementById('policyEarlyPenalty').value) || 100;
+            localStorage.setItem('LISES_POLICY', JSON.stringify(policyConfig));
+            renderCurrentModule();
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-3 py-1.5 rounded-md font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition";
+            });
+            document.querySelectorAll('.module-view').forEach(m => m.classList.add('hidden'));
+
+            if (tabId === 'teachers-record') {
+                document.getElementById('tab-teachers-record').className = "tab-btn px-3 py-1.5 rounded-md font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 transition";
+                document.getElementById('moduleTeachersRecord').classList.remove('hidden');
+            } else if (tabId === 'teachers-salary') {
+                document.getElementById('tab-teachers-salary').className = "tab-btn px-3 py-1.5 rounded-md font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 transition";
+                document.getElementById('moduleTeachersSalary').classList.remove('hidden');
+            } else if (tabId === 'drivers-salary') {
+                document.getElementById('tab-drivers-salary').className = "tab-btn px-3 py-1.5 rounded-md font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 transition";
+                document.getElementById('moduleDriversSalary').classList.remove('hidden');
+            }
+            renderCurrentModule();
+        }
+
+        function getPeriodKey() {
+            const y = document.getElementById('selectedYear').value;
+            const m = document.getElementById('selectedMonth').value;
+            return `${y}-${m.padStart(2, '0')}`;
+        }
+
+        function changePeriod() { renderCurrentModule(); }
+
+        function renderCurrentModule() {
+            if (currentTab === 'teachers-record') renderTeachersRecord();
+            else if (currentTab === 'teachers-salary') renderTeachersSalary();
+            else if (currentTab === 'drivers-salary') renderDriversSalary();
+            lucide.createIcons();
+        }
+
+        // ================= PROFILE INLINE EDIT HANDLERS =================
+        function updateTeacherProfileInline(teacherId, field, val) {
+            const t = teachers.find(x => x.id === teacherId);
+            if (t) {
+                if (field === 'salary' || field === 'increment' || field === 'marup') {
+                    t[field] = parseFloat(val) || 0;
+                } else {
+                    t[field] = val.trim();
+                }
+                localStorage.setItem('LISES_TEACHERS', JSON.stringify(teachers));
+                if (currentTab === 'teachers-salary') renderTeachersSalary();
+                else if (currentTab === 'teachers-record') renderTeachersRecord();
+            }
+        }
+
+        function updateDriverProfileInline(driverId, field, val) {
+            const d = drivers.find(x => x.id === driverId);
+            if (d) {
+                if (field === 'salary') {
+                    d[field] = parseFloat(val) || 0;
+                } else {
+                    d[field] = val.trim();
+                }
+                localStorage.setItem('LISES_DRIVERS', JSON.stringify(drivers));
+                renderDriversSalary();
+            }
+        }
+
+        // 1. TEACHERS RECORD
+        function renderTeachersRecord() {
+            const pKey = getPeriodKey();
+            const recs = attendanceData[pKey] || {};
+            const tbody = document.getElementById('teachersRecordTableBody');
+            tbody.innerHTML = '';
+
+            let totalAbs = 0, totalLev = 0, totalLate = 0, totalEarly = 0;
+
+            teachers.forEach((t, index) => {
+                const r = recs[t.id] || { absent: '', leave: '', late: '', early: '' };
+                totalAbs += Number(r.absent) || 0;
+                totalLev += Number(r.leave) || 0;
+                totalLate += Number(r.late) || 0;
+                totalEarly += Number(r.early) || 0;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 dark:hover:bg-slate-750 transition";
+                tr.innerHTML = `
+                    <td class="py-2 px-2 text-center text-slate-400 font-mono">${index + 1}</td>
+                    <td class="py-2 px-2">
+                        <input type="text" value="${t.name}" onchange="updateTeacherProfileInline(${t.id}, 'name', this.value)" class="w-full font-semibold text-slate-800 dark:text-slate-100 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-brand-500 rounded px-1.5 py-1 text-xs">
+                    </td>
+                    <td class="py-2 px-2">
+                        <input type="text" value="${t.designation}" onchange="updateTeacherProfileInline(${t.id}, 'designation', this.value)" class="w-full text-slate-500 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-brand-500 rounded px-1.5 py-1 text-xs">
+                    </td>
+                    <td class="py-2 px-2 text-center">
+                        <input type="number" min="0" value="${r.absent}" onchange="updateAttendanceEntry(${t.id}, 'absent', this.value)" class="w-16 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-medium">
+                    </td>
+                    <td class="py-2 px-2 text-center">
+                        <input type="number" min="0" value="${r.leave}" onchange="updateAttendanceEntry(${t.id}, 'leave', this.value)" class="w-16 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-medium">
+                    </td>
+                    <td class="py-2 px-2 text-center">
+                        <input type="number" min="0" value="${r.late}" onchange="updateAttendanceEntry(${t.id}, 'late', this.value)" class="w-16 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-medium">
+                    </td>
+                    <td class="py-2 px-2 text-center">
+                        <input type="number" min="0" value="${r.early}" onchange="updateAttendanceEntry(${t.id}, 'early', this.value)" class="w-16 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-medium">
+                    </td>
+                    <td class="py-2 px-2 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editStaffProfile(${t.id})" class="p-1 text-slate-400 hover:text-brand-600" title="Edit Full Profile"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteStaffProfile(${t.id})" class="p-1 text-slate-400 hover:text-rose-600" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderKPIs([
+                { label: "Total Absent Days", value: totalAbs, icon: "user-x" },
+                { label: "Total Leave Days", value: totalLev, icon: "calendar-off" },
+                { label: "Total Late Arrivals", value: totalLate, icon: "clock-alert" },
+                { label: "Total Early Departures", value: totalEarly, icon: "log-out" }
+            ]);
+        }
+
+        function updateAttendanceEntry(staffId, field, val) {
+            const pKey = getPeriodKey();
+            if (!attendanceData[pKey]) attendanceData[pKey] = {};
+            if (!attendanceData[pKey][staffId]) attendanceData[pKey][staffId] = { absent: '', leave: '', late: '', early: '' };
+            attendanceData[pKey][staffId][field] = val;
+            localStorage.setItem('LISES_ATTENDANCE_DATA', JSON.stringify(attendanceData));
+            renderTeachersRecord();
+        }
+
+        // 2. TEACHERS SALARY
+        function renderTeachersSalary() {
+            const pKey = getPeriodKey();
+            const curData = monthlyData[pKey]?.teachers || {};
+            const tbody = document.getElementById('teachersSalaryTableBody');
+            const tfoot = document.getElementById('teachersSalaryTableFoot');
+            tbody.innerHTML = '';
+
+            let sumSalary = 0, sumIncr = 0, sumTotalSal = 0, sumMarup = 0, sumDed = 0, sumAdv = 0, sumProbable = 0;
+            const daysInMonth = policyConfig.daysInMonth || 30;
+
+            teachers.forEach((t, index) => {
+                const s = curData[t.id] || { absent: '', leave: '', late: '', early: '', deduction: '', advance: '' };
+
+                const baseSal = Number(t.salary) || 0;
+                const incr = Number(t.increment) || 0;
+                const totSal = baseSal + incr;
+                const marup = Number(t.marup) || 0;
+
+                const absentDays = Number(s.absent) || 0;
+                const absentDeduction = (baseSal / daysInMonth) * absentDays;
+
+                const lateCount = Number(s.late) || 0;
+                const earlyCount = Number(s.early) || 0;
+                const latePenalty = lateCount > 0 ? (lateCount * policyConfig.latePenalty) : 0;
+                const earlyPenalty = earlyCount > 0 ? (earlyCount * policyConfig.earlyPenalty) : 0;
+
+                const manualDeduction = Number(s.deduction) || 0;
+                const totalAutoDeduction = Math.round(absentDeduction + latePenalty + earlyPenalty + manualDeduction);
+                const advance = Number(s.advance) || 0;
+
+                let calculatedProbable = totSal - marup - totalAutoDeduction - advance;
+                if (calculatedProbable < 0) calculatedProbable = 0;
+
+                sumSalary += baseSal;
+                sumIncr += incr;
+                sumTotalSal += totSal;
+                sumMarup += marup;
+                sumDed += totalAutoDeduction;
+                sumAdv += advance;
+                sumProbable += calculatedProbable;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-750 transition";
+                tr.innerHTML = `
+                    <td class="py-2 px-1 text-center text-slate-400 font-mono">${index + 1}</td>
+                    
+                    <!-- EDITABLE PROFILE: NAME -->
+                    <td class="py-1 px-1">
+                        <input type="text" value="${t.name}" onchange="updateTeacherProfileInline(${t.id}, 'name', this.value)" class="w-full font-semibold text-slate-800 dark:text-slate-100 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-brand-500 rounded px-1 py-1 text-xs">
+                    </td>
+
+                    <!-- EDITABLE PROFILE: DESIGNATION -->
+                    <td class="py-1 px-1">
+                        <input type="text" value="${t.designation}" onchange="updateTeacherProfileInline(${t.id}, 'designation', this.value)" class="w-full text-slate-500 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-brand-500 rounded px-1 py-1 text-xs">
+                    </td>
+
+                    <!-- ATTENDANCE INPUTS -->
+                    <td class="py-1 px-0.5 text-center">
+                        <input type="number" min="0" value="${s.absent}" onchange="updateSalaryField(${t.id}, 'absent', this.value)" class="w-9 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-xs">
+                    </td>
+                    <td class="py-1 px-0.5 text-center">
+                        <input type="number" min="0" value="${s.leave}" onchange="updateSalaryField(${t.id}, 'leave', this.value)" class="w-9 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-xs">
+                    </td>
+                    <td class="py-1 px-0.5 text-center">
+                        <input type="number" min="0" value="${s.late}" onchange="updateSalaryField(${t.id}, 'late', this.value)" class="w-9 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-xs">
+                    </td>
+                    <td class="py-1 px-0.5 text-center">
+                        <input type="number" min="0" value="${s.early}" onchange="updateSalaryField(${t.id}, 'early', this.value)" class="w-9 text-center py-1 bg-slate-50 dark:bg-slate-900 border rounded font-semibold text-xs">
+                    </td>
+
+                    <!-- EDITABLE PROFILE: BASIC SALARY -->
+                    <td class="py-1 px-1 text-center bg-blue-50/30 dark:bg-blue-950/10">
+                        <input type="number" value="${baseSal}" onchange="updateTeacherProfileInline(${t.id}, 'salary', this.value)" class="w-20 text-right px-1.5 py-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900 rounded font-mono font-semibold text-xs text-brand-700 dark:text-brand-300">
+                    </td>
+
+                    <!-- EDITABLE PROFILE: SALARY INCREMENT -->
+                    <td class="py-1 px-1 text-center bg-emerald-50/30 dark:bg-emerald-950/10">
+                        <input type="number" value="${incr}" onchange="updateTeacherProfileInline(${t.id}, 'increment', this.value)" class="w-16 text-right px-1.5 py-1 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900 rounded font-mono font-semibold text-xs text-emerald-600 dark:text-emerald-400">
+                    </td>
+
+                    <td class="py-2 px-2 text-right font-mono font-bold">${totSal.toLocaleString()}</td>
+
+                    <!-- EDITABLE PROFILE: MARUP -->
+                    <td class="py-1 px-1 text-center bg-amber-50/30 dark:bg-amber-950/10">
+                        <input type="number" value="${marup}" onchange="updateTeacherProfileInline(${t.id}, 'marup', this.value)" class="w-16 text-right px-1.5 py-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900 rounded font-mono font-semibold text-xs text-amber-600 dark:text-amber-400">
+                    </td>
+
+                    <td class="py-1 px-1 text-right">
+                        <input type="number" placeholder="${totalAutoDeduction > 0 ? totalAutoDeduction : '0'}" value="${s.deduction}" onchange="updateSalaryField(${t.id}, 'deduction', this.value)" class="w-16 text-right py-1 px-1.5 bg-slate-50 dark:bg-slate-900 border rounded text-rose-600 dark:text-rose-400 font-mono font-semibold text-xs">
+                    </td>
+                    <td class="py-1 px-1 text-right">
+                        <input type="number" value="${s.advance}" onchange="updateSalaryField(${t.id}, 'advance', this.value)" class="w-16 text-right py-1 px-1.5 bg-slate-50 dark:bg-slate-900 border rounded text-purple-600 dark:text-purple-400 font-mono font-semibold text-xs">
+                    </td>
+                    <td class="py-2 px-2 text-right font-mono font-black text-brand-700 dark:text-brand-300">${calculatedProbable.toLocaleString()}</td>
+                    <td class="py-2 px-1 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="downloadSingleSlipPDF('teacher', ${t.id})" class="p-1 text-brand-600 hover:bg-brand-50 rounded" title="Slip PDF"><i data-lucide="printer" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="editStaffProfile(${t.id})" class="p-1 text-slate-400 hover:text-brand-600" title="Edit Profile Details"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="deleteStaffProfile(${t.id})" class="p-1 text-slate-400 hover:text-rose-600" title="Delete Profile"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td colspan="3" class="py-3 px-3 text-center uppercase tracking-wider font-extrabold text-xs">Total</td>
+                    <td colspan="4" class="text-center font-mono text-xs text-slate-500">—</td>
+                    <td class="py-3 px-2 text-right font-mono">${sumSalary.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-right font-mono text-emerald-600">${sumIncr.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-right font-mono">${sumTotalSal.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-right font-mono text-amber-600">${sumMarup.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-right font-mono text-rose-600">${sumDed.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-right font-mono text-purple-600">${sumAdv.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-right font-mono text-brand-700 dark:text-brand-300 font-black">${sumProbable.toLocaleString()}</td>
+                    <td></td>
+                </tr>
+            `;
+
+            renderKPIs([
+                { label: "Total Gross Salary", value: "₹" + sumTotalSal.toLocaleString(), icon: "layers" },
+                { label: "Total Marup Amount", value: "₹" + sumMarup.toLocaleString(), icon: "piggy-bank" },
+                { label: "Total Deductions", value: "₹" + sumDed.toLocaleString(), icon: "scissors" },
+                { label: "Total Net Probable", value: "₹" + sumProbable.toLocaleString(), icon: "banknote" }
+            ]);
+        }
+
+        function updateSalaryField(id, field, value) {
+            const pKey = getPeriodKey();
+            if (!monthlyData[pKey]) monthlyData[pKey] = { teachers: {}, drivers: {} };
+            if (!monthlyData[pKey].teachers[id]) monthlyData[pKey].teachers[id] = {};
+            monthlyData[pKey].teachers[id][field] = value;
+            localStorage.setItem('LISES_MONTHLY_DATA', JSON.stringify(monthlyData));
+            renderTeachersSalary();
+        }
+
+        // 3. DRIVERS SALARY (WITH COMPLETE INLINE EDITABLE PROFILE)
+        function renderDriversSalary() {
+            const pKey = getPeriodKey();
+            const curData = monthlyData[pKey]?.drivers || {};
+            const tbody = document.getElementById('driversSalaryTableBody');
+            const tfoot = document.getElementById('driversSalaryTableFoot');
+            tbody.innerHTML = '';
+
+            let sumSalary = 0, sumDed = 0, sumAdv = 0, sumProbable = 0;
+
+            drivers.forEach((d, index) => {
+                const s = curData[d.id] || { deduction: '', advance: '' };
+                const sal = Number(d.salary) || 0;
+                const ded = Number(s.deduction) || 0;
+                const adv = Number(s.advance) || 0;
+                let prob = sal - ded - adv;
+                if (prob < 0) prob = 0;
+
+                sumSalary += sal;
+                sumDed += ded;
+                sumAdv += adv;
+                sumProbable += prob;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-750 transition";
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${index + 1}</td>
+                    
+                    <!-- EDITABLE DRIVER PROFILE: NAME -->
+                    <td class="py-2 px-2">
+                        <input type="text" value="${d.name}" onchange="updateDriverProfileInline(${d.id}, 'name', this.value)" class="w-full font-semibold text-slate-800 dark:text-slate-100 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-brand-500 rounded px-1.5 py-1 text-xs">
+                    </td>
+
+                    <!-- EDITABLE DRIVER PROFILE: ADDRESS -->
+                    <td class="py-2 px-2">
+                        <input type="text" value="${d.address}" onchange="updateDriverProfileInline(${d.id}, 'address', this.value)" class="w-full text-slate-500 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-brand-500 rounded px-1.5 py-1 text-xs">
+                    </td>
+
+                    <!-- EDITABLE DRIVER PROFILE: PHONE -->
+                    <td class="py-2 px-2">
+                        <input type="text" value="${d.phone}" onchange="updateDriverProfileInline(${d.id}, 'phone', this.value)" class="w-full font-mono text-slate-600 dark:text-slate-300 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-brand-500 rounded px-1.5 py-1 text-xs">
+                    </td>
+
+                    <!-- EDITABLE DRIVER PROFILE: SALARY -->
+                    <td class="py-2 px-2 text-center bg-blue-50/30 dark:bg-blue-950/10">
+                        <input type="number" value="${sal}" onchange="updateDriverProfileInline(${d.id}, 'salary', this.value)" class="w-20 text-right px-2 py-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900 rounded font-mono font-semibold text-xs text-brand-700 dark:text-brand-300">
+                    </td>
+
+                    <td class="py-2 px-3 text-right">
+                        <input type="number" min="0" value="${s.deduction}" onchange="updateDriverSalaryField(${d.id}, 'deduction', this.value)" class="w-20 text-right py-1 px-2 bg-slate-50 dark:bg-slate-900 border rounded text-rose-600 font-mono font-semibold text-xs">
+                    </td>
+                    <td class="py-2 px-3 text-right">
+                        <input type="number" min="0" value="${s.advance}" onchange="updateDriverSalaryField(${d.id}, 'advance', this.value)" class="w-20 text-right py-1 px-2 bg-slate-50 dark:bg-slate-900 border rounded text-purple-600 font-mono font-semibold text-xs">
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono font-black text-brand-700 dark:text-brand-300">${prob.toLocaleString()}</td>
+                    <td class="py-2 px-3 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="downloadSingleSlipPDF('driver', ${d.id})" class="p-1 text-brand-600 hover:bg-brand-50 rounded" title="Slip PDF"><i data-lucide="printer" class="w-4 h-4"></i></button>
+                            <button onclick="editDriverProfile(${d.id})" class="p-1 text-slate-400 hover:text-brand-600" title="Edit Full Profile"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteDriverProfile(${d.id})" class="p-1 text-slate-400 hover:text-rose-600" title="Delete Profile"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td colspan="4" class="py-3 px-3 text-center uppercase tracking-wider font-extrabold text-xs">Total</td>
+                    <td class="py-3 px-3 text-right font-mono">${sumSalary.toLocaleString()}</td>
+                    <td class="py-3 px-3 text-right font-mono text-rose-600">${sumDed.toLocaleString()}</td>
+                    <td class="py-3 px-3 text-right font-mono text-purple-600">${sumAdv.toLocaleString()}</td>
+                    <td class="py-3 px-3 text-right font-mono text-brand-700 dark:text-brand-300 font-black">${sumProbable.toLocaleString()}</td>
+                    <td></td>
+                </tr>
+            `;
+
+            renderKPIs([
+                { label: "Total Drivers Salary", value: "₹" + sumSalary.toLocaleString(), icon: "truck" },
+                { label: "Total Driver Deductions", value: "₹" + sumDed.toLocaleString(), icon: "scissors" },
+                { label: "Total Driver Advances", value: "₹" + sumAdv.toLocaleString(), icon: "wallet" },
+                { label: "Total Driver Probable", value: "₹" + sumProbable.toLocaleString(), icon: "badge-check" }
+            ]);
+        }
+
+        function updateDriverSalaryField(id, field, value) {
+            const pKey = getPeriodKey();
+            if (!monthlyData[pKey]) monthlyData[pKey] = { teachers: {}, drivers: {} };
+            if (!monthlyData[pKey].drivers[id]) monthlyData[pKey].drivers[id] = {};
+            monthlyData[pKey].drivers[id][field] = value;
+            localStorage.setItem('LISES_MONTHLY_DATA', JSON.stringify(monthlyData));
+            renderDriversSalary();
+        }
+
+        function renderKPIs(items) {
+            const c = document.getElementById('kpiContainer');
+            c.innerHTML = items.map(it => `
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold">
+                        <i data-lucide="${it.icon}" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">${it.label}</p>
+                        <h4 class="text-lg font-black text-slate-900 dark:text-white mt-0.5">${it.value}</h4>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function saveAllCurrentMonthData() {
+            localStorage.setItem('LISES_TEACHERS', JSON.stringify(teachers));
+            localStorage.setItem('LISES_DRIVERS', JSON.stringify(drivers));
+            localStorage.setItem('LISES_MONTHLY_DATA', JSON.stringify(monthlyData));
+            localStorage.setItem('LISES_ATTENDANCE_DATA', JSON.stringify(attendanceData));
+            alert('All modified profiles, salary amounts, and monthly attendance records have been successfully saved.');
+        }
+
+        // ================= FULL MODAL CRUD: TEACHERS =================
+        function openStaffModal() {
+            document.getElementById('staffEditId').value = '';
+            document.getElementById('staffModalTitle').textContent = 'Add New Teacher / Staff Profile';
+            document.getElementById('staffNameInput').value = '';
+            document.getElementById('staffDesigInput').value = '';
+            document.getElementById('staffSalaryInput').value = '';
+            document.getElementById('staffIncrementInput').value = '0';
+            document.getElementById('staffMarupInput').value = '200';
+            document.getElementById('staffModal').classList.remove('hidden');
+        }
+        function closeStaffModal() { document.getElementById('staffModal').classList.add('hidden'); }
+        function editStaffProfile(id) {
+            const t = teachers.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('staffEditId').value = t.id;
+            document.getElementById('staffModalTitle').textContent = 'Edit Teacher Profile';
+            document.getElementById('staffNameInput').value = t.name;
+            document.getElementById('staffDesigInput').value = t.designation;
+            document.getElementById('staffSalaryInput').value = t.salary;
+            document.getElementById('staffIncrementInput').value = t.increment;
+            document.getElementById('staffMarupInput').value = t.marup;
+            document.getElementById('staffModal').classList.remove('hidden');
+        }
+        function saveStaffProfile() {
+            const id = document.getElementById('staffEditId').value;
+            const name = document.getElementById('staffNameInput').value.trim();
+            const desig = document.getElementById('staffDesigInput').value.trim();
+            const salary = parseFloat(document.getElementById('staffSalaryInput').value) || 0;
+            const increment = parseFloat(document.getElementById('staffIncrementInput').value) || 0;
+            const marup = parseFloat(document.getElementById('staffMarupInput').value) || 0;
+
+            if (!name || !desig) {
+                alert('Please enter complete name and designation.');
+                return;
+            }
+
+            if (id) {
+                const item = teachers.find(x => x.id == id);
+                if (item) {
+                    item.name = name; item.designation = desig; item.salary = salary;
+                    item.increment = increment; item.marup = marup;
+                }
+            } else {
+                const newId = teachers.length > 0 ? Math.max(...teachers.map(x => x.id)) + 1 : 1;
+                teachers.push({ id: newId, name, designation: desig, salary, increment, marup });
+            }
+            localStorage.setItem('LISES_TEACHERS', JSON.stringify(teachers));
+            closeStaffModal();
+            renderCurrentModule();
+        }
+        function deleteStaffProfile(id) {
+            if (confirm('Are you sure you want to delete this teacher profile?')) {
+                teachers = teachers.filter(x => x.id !== id);
+                localStorage.setItem('LISES_TEACHERS', JSON.stringify(teachers));
+                renderCurrentModule();
+            }
+        }
+
+        // ================= FULL MODAL CRUD: DRIVERS =================
+        function openDriverModal() {
+            document.getElementById('driverEditId').value = '';
+            document.getElementById('driverModalTitle').textContent = 'Add New Van Driver Profile';
+            document.getElementById('driverNameInput').value = '';
+            document.getElementById('driverAddressInput').value = '';
+            document.getElementById('driverPhoneInput').value = '';
+            document.getElementById('driverSalaryInput').value = '';
+            document.getElementById('driverModal').classList.remove('hidden');
+        }
+        function closeDriverModal() { document.getElementById('driverModal').classList.add('hidden'); }
+        function editDriverProfile(id) {
+            const d = drivers.find(x => x.id === id);
+            if (!d) return;
+            document.getElementById('driverEditId').value = d.id;
+            document.getElementById('driverModalTitle').textContent = 'Edit Van Driver Profile';
+            document.getElementById('driverNameInput').value = d.name;
+            document.getElementById('driverAddressInput').value = d.address;
+            document.getElementById('driverPhoneInput').value = d.phone;
+            document.getElementById('driverSalaryInput').value = d.salary;
+            document.getElementById('driverModal').classList.remove('hidden');
+        }
+        function saveDriverProfile() {
+            const id = document.getElementById('driverEditId').value;
+            const name = document.getElementById('driverNameInput').value.trim();
+            const address = document.getElementById('driverAddressInput').value.trim();
+            const phone = document.getElementById('driverPhoneInput').value.trim();
+            const salary = parseFloat(document.getElementById('driverSalaryInput').value) || 0;
+
+            if (!name || !phone) {
+                alert('Please enter complete driver name and phone number.');
+                return;
+            }
+
+            if (id) {
+                const item = drivers.find(x => x.id == id);
+                if (item) {
+                    item.name = name; item.address = address;
+                    item.phone = phone; item.salary = salary;
+                }
+            } else {
+                const newId = drivers.length > 0 ? Math.max(...drivers.map(x => x.id)) + 1 : 1;
+                drivers.push({ id: newId, name, address, phone, salary });
+            }
+            localStorage.setItem('LISES_DRIVERS', JSON.stringify(drivers));
+            closeDriverModal();
+            renderCurrentModule();
+        }
+        function deleteDriverProfile(id) {
+            if (confirm('Are you sure you want to remove this driver profile?')) {
+                drivers = drivers.filter(x => x.id !== id);
+                localStorage.setItem('LISES_DRIVERS', JSON.stringify(drivers));
+                renderCurrentModule();
+            }
+        }
+
+        function getMonthName() {
+            const m = document.getElementById('selectedMonth');
+            return m.options[m.selectedIndex].text;
+        }
+
+        // ================= DOWNLOAD HANDLERS =================
+        function downloadTeacherRecordPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pKey = getPeriodKey();
+            const recs = attendanceData[pKey] || {};
+
+            doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+            doc.text("The L. I. Standard English School", 105, 14, { align: 'center' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text("Icham Khunou — Teachers Monthly Attendance Record", 105, 20, { align: 'center' });
+            doc.text(`Period: ${getMonthName()} ${document.getElementById('selectedYear').value}`, 105, 25, { align: 'center' });
+
+            const tableRows = teachers.map((t, idx) => {
+                const r = recs[t.id] || { absent: '-', leave: '-', late: '-', early: '-' };
+                return [idx + 1, t.name, t.designation, r.absent || '0', r.leave || '0', r.late || '0', r.early || '0'];
+            });
+
+            doc.autoTable({
+                head: [['Sl', 'Name Of Teacher', 'Designation', 'Total Absent', 'Total Leave', 'Late Arrival', 'Early Departure']],
+                body: tableRows,
+                startY: 30,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [2, 132, 199] },
+                margin: { left: 10, right: 10 }
+            });
+            doc.save(`Teachers_Attendance_${pKey}.pdf`);
+        }
+
+        function downloadTeacherRecordExcel() {
+            const pKey = getPeriodKey();
+            const recs = attendanceData[pKey] || {};
+            const data = teachers.map((t, idx) => {
+                const r = recs[t.id] || { absent: 0, leave: 0, late: 0, early: 0 };
+                return {
+                    "Sl/No": idx + 1, "Name Of Teachers": t.name, "Designation": t.designation,
+                    "Total Absent": Number(r.absent) || 0, "Total Leave": Number(r.leave) || 0,
+                    "Late Arrival": Number(r.late) || 0, "Departure": Number(r.early) || 0
+                };
+            });
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Attendance Record");
+            XLSX.writeFile(wb, `Teachers_Attendance_${pKey}.xlsx`);
+        }
+
+        function downloadTeacherSalaryPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const pKey = getPeriodKey();
+            const curData = monthlyData[pKey]?.teachers || {};
+            const daysInMonth = policyConfig.daysInMonth || 30;
+
+            doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+            doc.text("The L. I. Standard English School", 148, 12, { align: 'center' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text("Icham Khunou — Teachers & Staff Master Salary Ledger", 148, 17, { align: 'center' });
+            doc.text(`Salary Statement For: ${getMonthName()} ${document.getElementById('selectedYear').value}`, 148, 22, { align: 'center' });
+
+            let sumSalary = 0, sumIncr = 0, sumTotSal = 0, sumMarup = 0, sumDed = 0, sumAdv = 0, sumProb = 0;
+
+            const tableRows = teachers.map((t, idx) => {
+                const s = curData[t.id] || { absent: 0, leave: 0, late: 0, early: 0, deduction: 0, advance: 0 };
+                const baseSal = Number(t.salary) || 0;
+                const incr = Number(t.increment) || 0;
+                const totSal = baseSal + incr;
+                const marup = Number(t.marup) || 0;
+
+                const absentDays = Number(s.absent) || 0;
+                const absentDeduction = (baseSal / daysInMonth) * absentDays;
+                const latePenalty = (Number(s.late) || 0) * policyConfig.latePenalty;
+                const earlyPenalty = (Number(s.early) || 0) * policyConfig.earlyPenalty;
+                const manualDed = Number(s.deduction) || 0;
+                const totalDed = Math.round(absentDeduction + latePenalty + earlyPenalty + manualDed);
+                const adv = Number(s.advance) || 0;
+
+                let prob = totSal - marup - totalDed - adv;
+                if (prob < 0) prob = 0;
+
+                sumSalary += baseSal; sumIncr += incr; sumTotSal += totSal;
+                sumMarup += marup; sumDed += totalDed; sumAdv += adv; sumProb += prob;
+
+                return [
+                    idx + 1, t.name, t.designation, s.absent || 0, s.leave || 0, s.late || 0, s.early || 0,
+                    baseSal.toLocaleString(), incr.toLocaleString(), totSal.toLocaleString(), marup.toLocaleString(),
+                    totalDed.toLocaleString(), adv.toLocaleString(), prob.toLocaleString()
+                ];
+            });
+
+            const footRow = [
+                'Total', '', '', '', '', '', '',
+                sumSalary.toLocaleString(), sumIncr.toLocaleString(), sumTotSal.toLocaleString(),
+                sumMarup.toLocaleString(), sumDed.toLocaleString(), sumAdv.toLocaleString(), sumProb.toLocaleString()
+            ];
+
+            doc.autoTable({
+                head: [['Sl', 'Name Of Teachers', 'Designation', 'Abs', 'Lev', 'Late', 'Dep', 'Salary', 'Incr.', 'Total Sal', 'Marup', 'Deduction', 'Advance', 'Probable Amt']],
+                body: tableRows,
+                foot: [footRow],
+                startY: 26,
+                theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1.5 },
+                headStyles: { fillColor: [2, 132, 199] },
+                footStyles: { fillColor: [224, 242, 254], textColor: [0, 0, 0], fontStyle: 'bold' },
+                margin: { left: 8, right: 8 }
+            });
+            doc.save(`Teachers_Salary_Master_${pKey}.pdf`);
+        }
+
+        function downloadTeacherSalaryExcel() {
+            const pKey = getPeriodKey();
+            const curData = monthlyData[pKey]?.teachers || {};
+            const daysInMonth = policyConfig.daysInMonth || 30;
+
+            const data = teachers.map((t, idx) => {
+                const s = curData[t.id] || { absent: 0, leave: 0, late: 0, early: 0, deduction: 0, advance: 0 };
+                const baseSal = Number(t.salary) || 0;
+                const incr = Number(t.increment) || 0;
+                const totSal = baseSal + incr;
+                const marup = Number(t.marup) || 0;
+
+                const absentDays = Number(s.absent) || 0;
+                const absentDeduction = (baseSal / daysInMonth) * absentDays;
+                const latePenalty = (Number(s.late) || 0) * policyConfig.latePenalty;
+                const earlyPenalty = (Number(s.early) || 0) * policyConfig.earlyPenalty;
+                const manualDed = Number(s.deduction) || 0;
+                const totalDed = Math.round(absentDeduction + latePenalty + earlyPenalty + manualDed);
+                const adv = Number(s.advance) || 0;
+                let prob = totSal - marup - totalDed - adv;
+                if (prob < 0) prob = 0;
+
+                return {
+                    "Sl/No": idx + 1, "Name Of Teachers'": t.name, "Designation": t.designation,
+                    "No. Of Absence": Number(s.absent) || 0, "No. Of Leave": Number(s.leave) || 0,
+                    "Late Arrival": Number(s.late) || 0, "Departure": Number(s.early) || 0,
+                    "Salary": baseSal, "Salary Increment": incr, "Total Salary": totSal,
+                    "Deduction (Marup)": marup, "Deduction": totalDed, "Advance": adv, "Probable Amount": prob
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Salary Master");
+            XLSX.writeFile(wb, `Teachers_Salary_${pKey}.xlsx`);
+        }
+
+        function downloadDriverSalaryPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pKey = getPeriodKey();
+            const curData = monthlyData[pKey]?.drivers || {};
+
+            doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+            doc.text("The L. I. Standard English School", 105, 14, { align: 'center' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text("Icham Khunou — Van Drivers Salary Statement", 105, 20, { align: 'center' });
+            doc.text(`Period: ${getMonthName()} ${document.getElementById('selectedYear').value}`, 105, 25, { align: 'center' });
+
+            let sumSalary = 0, sumDed = 0, sumAdv = 0, sumProb = 0;
+
+            const tableRows = drivers.map((d, idx) => {
+                const s = curData[d.id] || { deduction: 0, advance: 0 };
+                const sal = Number(d.salary) || 0;
+                const ded = Number(s.deduction) || 0;
+                const adv = Number(s.advance) || 0;
+                let prob = sal - ded - adv;
+                if (prob < 0) prob = 0;
+
+                sumSalary += sal; sumDed += ded; sumAdv += adv; sumProb += prob;
+
+                return [idx + 1, d.name, d.address, d.phone, sal.toLocaleString(), ded > 0 ? ded.toLocaleString() : '-', adv > 0 ? adv.toLocaleString() : '-', prob.toLocaleString()];
+            });
+
+            const footRow = ['Total', '', '', '', sumSalary.toLocaleString(), sumDed.toLocaleString(), sumAdv.toLocaleString(), sumProb.toLocaleString()];
+
+            doc.autoTable({
+                head: [['Sl. No', 'Name Of Driver', 'Address', 'Contact No', 'Salary', 'Deduction', 'Advance', 'Probable Amount']],
+                body: tableRows, foot: [footRow], startY: 30, theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2.5 },
+                headStyles: { fillColor: [2, 132, 199] },
+                footStyles: { fillColor: [224, 242, 254], textColor: [0, 0, 0], fontStyle: 'bold' },
+                margin: { left: 10, right: 10 }
+            });
+            doc.save(`Van_Drivers_Salary_${pKey}.pdf`);
+        }
+
+        function downloadDriverSalaryExcel() {
+            const pKey = getPeriodKey();
+            const curData = monthlyData[pKey]?.drivers || {};
+
+            const data = drivers.map((d, idx) => {
+                const s = curData[d.id] || { deduction: 0, advance: 0 };
+                const sal = Number(d.salary) || 0;
+                const ded = Number(s.deduction) || 0;
+                const adv = Number(s.advance) || 0;
+                let prob = sal - ded - adv;
+                if (prob < 0) prob = 0;
+
+                return { "Sl. No": idx + 1, "Name Of Driver": d.name, "Address": d.address, "Contact No": d.phone, "Salary": sal, "Deduction": ded, "Advance": adv, "Probable Amount": prob };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Drivers Salary");
+            XLSX.writeFile(wb, `Van_Drivers_Salary_${pKey}.xlsx`);
+        }
+
+        function downloadSingleSlipPDF(type, id) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pKey = getPeriodKey();
+            const monthName = getMonthName();
+            const yearVal = document.getElementById('selectedYear').value;
+
+            if (type === 'teacher') {
+                const t = teachers.find(x => x.id === id);
+                if (!t) return;
+                const s = monthlyData[pKey]?.teachers?.[id] || { absent: 0, leave: 0, late: 0, early: 0, deduction: 0, advance: 0 };
+                const baseSal = Number(t.salary) || 0;
+                const incr = Number(t.increment) || 0;
+                const totSal = baseSal + incr;
+                const marup = Number(t.marup) || 0;
+
+                const absentDays = Number(s.absent) || 0;
+                const absentDeduction = (baseSal / (policyConfig.daysInMonth || 30)) * absentDays;
+                const latePenalty = (Number(s.late) || 0) * policyConfig.latePenalty;
+                const earlyPenalty = (Number(s.early) || 0) * policyConfig.earlyPenalty;
+                const manualDed = Number(s.deduction) || 0;
+                const totalDed = Math.round(absentDeduction + latePenalty + earlyPenalty + manualDed);
+                const adv = Number(s.advance) || 0;
+                let prob = totSal - marup - totalDed - adv;
+                if (prob < 0) prob = 0;
+
+                doc.setDrawColor(2, 132, 199); doc.setLineWidth(0.8); doc.rect(15, 15, 180, 135);
+                doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(2, 132, 199);
+                doc.text("The L. I. Standard English School", 105, 26, { align: 'center' });
+                doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.setFont('helvetica', 'normal');
+                doc.text("Icham Khunou — Staff Salary Slip", 105, 32, { align: 'center' });
+                doc.text(`Salary For The Month: ${monthName} ${yearVal}`, 105, 38, { align: 'center' });
+
+                doc.setDrawColor(200, 200, 200); doc.line(20, 42, 190, 42);
+                doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'bold');
+                doc.text(`Employee Name: ${t.name}`, 20, 50); doc.setFont('helvetica', 'normal');
+                doc.text(`Designation: ${t.designation}`, 20, 56);
+                doc.text(`Month Days: ${policyConfig.daysInMonth} | Absences: ${s.absent || 0} | Leaves: ${s.leave || 0}`, 20, 62);
+
+                doc.autoTable({
+                    startY: 68, margin: { left: 20, right: 20 }, theme: 'plain', styles: { fontSize: 9, cellPadding: 2 },
+                    body: [
+                        ['Basic Salary:', `Rs. ${baseSal.toLocaleString()}`, 'Marup Deduction:', `Rs. ${marup.toLocaleString()}`],
+                        ['Increment:', `Rs. ${incr.toLocaleString()}`, 'Absence & Other Deduction:', `Rs. ${totalDed.toLocaleString()}`],
+                        ['Gross Total Salary:', `Rs. ${totSal.toLocaleString()}`, 'Advance Drawn:', `Rs. ${adv.toLocaleString()}`],
+                        ['', '', 'Total Deductions:', `Rs. ${(marup + totalDed + adv).toLocaleString()}`]
+                    ]
+                });
+
+                doc.setDrawColor(2, 132, 199); doc.setFillColor(240, 249, 255); doc.rect(20, 106, 170, 12, 'FD');
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(2, 132, 199);
+                doc.text(`NET PROBABLE AMOUNT PAYABLE: Rs. ${prob.toLocaleString()}/-`, 105, 114, { align: 'center' });
+                doc.setTextColor(120, 120, 120); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                doc.text("Accountant / Admin Signature", 30, 140); doc.text("Employee Signature", 145, 140);
+                doc.save(`Payslip_${t.name.replace(/\s+/g, '_')}_${pKey}.pdf`);
+
+            } else if (type === 'driver') {
+                const d = drivers.find(x => x.id === id);
+                if (!d) return;
+                const s = monthlyData[pKey]?.drivers?.[id] || { deduction: 0, advance: 0 };
+                const sal = Number(d.salary) || 0;
+                const ded = Number(s.deduction) || 0;
+                const adv = Number(s.advance) || 0;
+                let prob = sal - ded - adv;
+                if (prob < 0) prob = 0;
+
+                doc.setDrawColor(2, 132, 199); doc.setLineWidth(0.8); doc.rect(15, 15, 180, 125);
+                doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(2, 132, 199);
+                doc.text("The L. I. Standard English School", 105, 26, { align: 'center' });
+                doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.setFont('helvetica', 'normal');
+                doc.text("Icham Khunou — Van Driver Salary Voucher", 105, 32, { align: 'center' });
+                doc.text(`Salary Period: ${monthName} ${yearVal}`, 105, 38, { align: 'center' });
+
+                doc.setDrawColor(200, 200, 200); doc.line(20, 42, 190, 42);
+                doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'bold');
+                doc.text(`Driver Name: ${d.name}`, 20, 50); doc.setFont('helvetica', 'normal');
+                doc.text(`Address / Route: ${d.address}`, 20, 56); doc.text(`Contact: ${d.phone}`, 20, 62);
+
+                doc.autoTable({
+                    startY: 68, margin: { left: 20, right: 20 }, theme: 'plain', styles: { fontSize: 9, cellPadding: 2.5 },
+                    body: [
+                        ['Agreed Monthly Salary:', `Rs. ${sal.toLocaleString()}`],
+                        ['Less Deduction:', `Rs. ${ded.toLocaleString()}`],
+                        ['Less Advance Taken:', `Rs. ${adv.toLocaleString()}`],
+                    ]
+                });
+
+                doc.setDrawColor(2, 132, 199); doc.setFillColor(240, 249, 255); doc.rect(20, 100, 170, 12, 'FD');
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(2, 132, 199);
+                doc.text(`NET PAYABLE AMOUNT: Rs. ${prob.toLocaleString()}/-`, 105, 108, { align: 'center' });
+                doc.setTextColor(120, 120, 120); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                doc.text("Authorised Signatory", 30, 130); doc.text("Driver Signature / Receipt", 135, 130);
+                doc.save(`Voucher_Driver_${d.name.replace(/\s+/g, '_')}_${pKey}.pdf`);
+            }
+        }
+    </script>
+</body>
+</html>
